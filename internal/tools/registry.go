@@ -12,6 +12,7 @@ import (
 type Registry struct {
 	tools     map[string]Tool
 	htbClient *htb.Client
+	htbToken  string
 }
 
 // Tool interface that all HTB tools must implement
@@ -23,10 +24,11 @@ type Tool interface {
 }
 
 // NewRegistry creates a new tool registry
-func NewRegistry(htbClient *htb.Client) *Registry {
+func NewRegistry(htbClient *htb.Client, htbToken string) *Registry {
 	registry := &Registry{
 		tools:     make(map[string]Tool),
 		htbClient: htbClient,
+		htbToken:  htbToken,
 	}
 
 	// Register all available tools
@@ -58,6 +60,9 @@ func (r *Registry) registerTools() {
 	// Search and utility tools
 	r.RegisterTool(NewSearchContent(r.htbClient))
 	r.RegisterTool(NewGetServerStatus(r.htbClient))
+
+	// Token management tools
+	r.RegisterTool(NewGetTokenStatus(r.htbClient, r.htbToken))
 }
 
 // RegisterTool registers a new tool

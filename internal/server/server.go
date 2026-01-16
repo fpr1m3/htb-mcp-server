@@ -35,7 +35,7 @@ func New(cfg *config.Config) *Server {
 	return &Server{
 		config:       cfg,
 		htbClient:    htbClient,
-		toolRegistry: tools.NewRegistry(htbClient),
+		toolRegistry: tools.NewRegistry(htbClient, cfg.HTBToken),
 		startTime:    time.Now(),
 		input:        os.Stdin,
 		output:       os.Stdout,
@@ -44,6 +44,10 @@ func New(cfg *config.Config) *Server {
 
 // Start begins the MCP server operation
 func (s *Server) Start(ctx context.Context) error {
+	// Check token health first
+	tokenHealth := htb.CheckTokenHealth(s.config.HTBToken)
+	log.Printf("Token status: %s", tokenHealth)
+
 	// Verify HTB API connection
 	if err := s.htbClient.HealthCheck(ctx); err != nil {
 		return fmt.Errorf("HTB API health check failed: %w", err)
