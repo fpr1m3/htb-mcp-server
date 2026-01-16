@@ -45,6 +45,8 @@ func (r *Registry) registerTools() {
 	// Machine management tools
 	r.RegisterTool(NewListMachines(r.htbClient))
 	r.RegisterTool(NewStartMachine(r.htbClient))
+	r.RegisterTool(NewStopMachine(r.htbClient))
+	r.RegisterTool(NewResetMachine(r.htbClient))
 	r.RegisterTool(NewGetMachineIP(r.htbClient))
 	r.RegisterTool(NewSubmitUserFlag(r.htbClient))
 	r.RegisterTool(NewSubmitRootFlag(r.htbClient))

@@ -343,3 +343,109 @@ func (t *SubmitRootFlag) Execute(ctx context.Context, args map[string]interface{
 		Content: []mcp.Content{content},
 	}, nil
 }
+
+// StopMachine tool for stopping/terminating a HTB machine
+type StopMachine struct {
+	client *htb.Client
+}
+
+func NewStopMachine(client *htb.Client) *StopMachine {
+	return &StopMachine{client: client}
+}
+
+func (t *StopMachine) Name() string {
+	return "stop_machine"
+}
+
+func (t *StopMachine) Description() string {
+	return "Stop/terminate an active HackTheBox machine"
+}
+
+func (t *StopMachine) Schema() mcp.ToolSchema {
+	return mcp.ToolSchema{
+		Type: "object",
+		Properties: map[string]mcp.Property{
+			"machine_id": {
+				Type:        "integer",
+				Description: "The ID of the machine to stop",
+			},
+		},
+		Required: []string{"machine_id"},
+	}
+}
+
+func (t *StopMachine) Execute(ctx context.Context, args map[string]interface{}) (*mcp.CallToolResponse, error) {
+	machineID, ok := args["machine_id"].(float64)
+	if !ok {
+		return nil, fmt.Errorf("machine_id is required")
+	}
+
+	endpoint := fmt.Sprintf("/machine/stop/%d", int(machineID))
+
+	data, err := t.client.PostWithParsing(ctx, endpoint, nil, "")
+	if err != nil {
+		return nil, fmt.Errorf("failed to stop machine: %w", err)
+	}
+
+	content, err := mcp.CreateJSONContent(data)
+	if err != nil {
+		return nil, fmt.Errorf("failed to create JSON content: %w", err)
+	}
+
+	return &mcp.CallToolResponse{
+		Content: []mcp.Content{content},
+	}, nil
+}
+
+// ResetMachine tool for resetting a HTB machine
+type ResetMachine struct {
+	client *htb.Client
+}
+
+func NewResetMachine(client *htb.Client) *ResetMachine {
+	return &ResetMachine{client: client}
+}
+
+func (t *ResetMachine) Name() string {
+	return "reset_machine"
+}
+
+func (t *ResetMachine) Description() string {
+	return "Reset a HackTheBox machine to its initial state"
+}
+
+func (t *ResetMachine) Schema() mcp.ToolSchema {
+	return mcp.ToolSchema{
+		Type: "object",
+		Properties: map[string]mcp.Property{
+			"machine_id": {
+				Type:        "integer",
+				Description: "The ID of the machine to reset",
+			},
+		},
+		Required: []string{"machine_id"},
+	}
+}
+
+func (t *ResetMachine) Execute(ctx context.Context, args map[string]interface{}) (*mcp.CallToolResponse, error) {
+	machineID, ok := args["machine_id"].(float64)
+	if !ok {
+		return nil, fmt.Errorf("machine_id is required")
+	}
+
+	endpoint := fmt.Sprintf("/machine/reset/%d", int(machineID))
+
+	data, err := t.client.PostWithParsing(ctx, endpoint, nil, "")
+	if err != nil {
+		return nil, fmt.Errorf("failed to reset machine: %w", err)
+	}
+
+	content, err := mcp.CreateJSONContent(data)
+	if err != nil {
+		return nil, fmt.Errorf("failed to create JSON content: %w", err)
+	}
+
+	return &mcp.CallToolResponse{
+		Content: []mcp.Content{content},
+	}, nil
+}
