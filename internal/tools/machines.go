@@ -132,14 +132,13 @@ func (t *StartMachine) Execute(ctx context.Context, args map[string]interface{})
 		return nil, fmt.Errorf("machine_id is required")
 	}
 
-	// Build request payload
-	payload := htb.MachineActionRequest{
-		MachineID: int(machineID),
+	// Build request payload - HTB API expects machine_id in body
+	payload := map[string]int{
+		"machine_id": int(machineID),
 	}
 
-	// Determine the correct endpoint based on machine type
-	// For now, we'll use the standard machine endpoint
-	endpoint := fmt.Sprintf("/machine/play/%d", int(machineID))
+	// HTB API v4 uses /vm/spawn endpoint
+	endpoint := "/vm/spawn"
 
 	// Make API request
 	data, err := t.client.PostWithParsing(ctx, endpoint, payload, "")
@@ -380,9 +379,12 @@ func (t *StopMachine) Execute(ctx context.Context, args map[string]interface{}) 
 		return nil, fmt.Errorf("machine_id is required")
 	}
 
-	endpoint := fmt.Sprintf("/machine/stop/%d", int(machineID))
+	// HTB API v4 uses /vm/terminate with machine_id in body
+	payload := map[string]int{
+		"machine_id": int(machineID),
+	}
 
-	data, err := t.client.PostWithParsing(ctx, endpoint, nil, "")
+	data, err := t.client.PostWithParsing(ctx, "/vm/terminate", payload, "")
 	if err != nil {
 		return nil, fmt.Errorf("failed to stop machine: %w", err)
 	}
@@ -433,9 +435,12 @@ func (t *ResetMachine) Execute(ctx context.Context, args map[string]interface{})
 		return nil, fmt.Errorf("machine_id is required")
 	}
 
-	endpoint := fmt.Sprintf("/machine/reset/%d", int(machineID))
+	// HTB API v4 uses /vm/reset with machine_id in body
+	payload := map[string]int{
+		"machine_id": int(machineID),
+	}
 
-	data, err := t.client.PostWithParsing(ctx, endpoint, nil, "")
+	data, err := t.client.PostWithParsing(ctx, "/vm/reset", payload, "")
 	if err != nil {
 		return nil, fmt.Errorf("failed to reset machine: %w", err)
 	}
