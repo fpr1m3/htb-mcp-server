@@ -20,10 +20,11 @@ type TokenStatus struct {
 }
 
 // jwtPayload represents the relevant fields from a JWT payload
+// Note: HTB uses float64 timestamps (e.g., 1768609072.080649)
 type jwtPayload struct {
-	Exp int64 `json:"exp"`
-	Iat int64 `json:"iat"`
-	Sub string `json:"sub"`
+	Exp float64 `json:"exp"`
+	Iat float64 `json:"iat"`
+	Sub string  `json:"sub"`
 }
 
 // ParseTokenExpiry extracts expiry information from an HTB JWT token
@@ -69,8 +70,8 @@ func ParseTokenExpiry(token string) (*TokenStatus, error) {
 		return status, fmt.Errorf("JWT has no expiry claim")
 	}
 
-	// Calculate expiry
-	expiresAt := time.Unix(claims.Exp, 0)
+	// Calculate expiry (convert float64 timestamp to time.Time)
+	expiresAt := time.Unix(int64(claims.Exp), 0)
 	now := time.Now()
 	duration := expiresAt.Sub(now)
 	daysLeft := int(duration.Hours() / 24)
