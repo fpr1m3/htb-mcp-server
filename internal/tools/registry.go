@@ -10,9 +10,11 @@ import (
 
 // Registry manages all available MCP tools
 type Registry struct {
-	tools     map[string]Tool
-	htbClient *htb.Client
-	htbToken  string
+	tools           map[string]Tool
+	htbClient       *htb.Client
+	htbToken        string
+	htbRefreshToken string
+	tokenFiles      htb.TokenFiles
 }
 
 // Tool interface that all HTB tools must implement
@@ -24,11 +26,13 @@ type Tool interface {
 }
 
 // NewRegistry creates a new tool registry
-func NewRegistry(htbClient *htb.Client, htbToken string) *Registry {
+func NewRegistry(htbClient *htb.Client, htbToken, htbRefreshToken string, tokenFiles htb.TokenFiles) *Registry {
 	registry := &Registry{
-		tools:     make(map[string]Tool),
-		htbClient: htbClient,
-		htbToken:  htbToken,
+		tools:           make(map[string]Tool),
+		htbClient:       htbClient,
+		htbToken:        htbToken,
+		htbRefreshToken: htbRefreshToken,
+		tokenFiles:      tokenFiles,
 	}
 
 	// Register all available tools
@@ -63,6 +67,7 @@ func (r *Registry) registerTools() {
 
 	// Token management tools
 	r.RegisterTool(NewGetTokenStatus(r.htbClient, r.htbToken))
+	r.RegisterTool(NewRefreshToken(r.htbClient, r.htbToken, r.htbRefreshToken, r.tokenFiles))
 }
 
 // RegisterTool registers a new tool

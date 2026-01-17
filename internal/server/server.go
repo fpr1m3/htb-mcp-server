@@ -32,10 +32,15 @@ type Server struct {
 func New(cfg *config.Config) *Server {
 	htbClient := htb.NewClient(cfg)
 
+	tokenFiles := htb.TokenFiles{
+		AccessTokenPath:  cfg.TokenFilePath,
+		RefreshTokenPath: cfg.RefreshTokenFilePath,
+	}
+
 	return &Server{
 		config:       cfg,
 		htbClient:    htbClient,
-		toolRegistry: tools.NewRegistry(htbClient, cfg.HTBToken),
+		toolRegistry: tools.NewRegistry(htbClient, cfg.HTBToken, cfg.HTBRefreshToken, tokenFiles),
 		startTime:    time.Now(),
 		input:        os.Stdin,
 		output:       os.Stdout,
@@ -44,9 +49,34 @@ func New(cfg *config.Config) *Server {
 
 // Start begins the MCP server operation
 func (s *Server) Start(ctx context.Context) error {
-	// Check token health first
+	// Check token health and auto-refresh if needed
 	tokenHealth := htb.CheckTokenHealth(s.config.HTBToken)
 	log.Printf("Token status: %s", tokenHealth)
+
+	// Auto-refresh if enabled and token is expiring
+	if s.config.AutoRefresh && s.config.HTBRefreshToken != "" {
+		tokenFiles := htb.TokenFiles{
+			AccessTokenPath:  s.config.TokenFilePath,
+			RefreshTokenPath: s.config.RefreshTokenFilePath,
+		}
+
+		newToken, refreshed, err := htb.AutoRefreshIfNeeded(
+			s.config.HTBToken,
+			tokenFiles,
+			s.config.AutoRefreshThreshold,
+		)
+		if err != nil {
+			log.Printf("Auto-refresh warning: %v", err)
+		} else if refreshed {
+			log.Printf("Token auto-refreshed successfully")
+			s.config.HTBToken = newToken
+			// Recreate client with new token
+			s.htbClient = htb.NewClient(s.config)
+			// Log new token status
+			newHealth := htb.CheckTokenHealth(newToken)
+			log.Printf("New token status: %s", newHealth)
+		}
+	}
 
 	// Verify HTB API connection
 	if err := s.htbClient.HealthCheck(ctx); err != nil {
